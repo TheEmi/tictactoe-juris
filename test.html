@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tic Tac Toe - Juris</title>
+    <style>
+      .game {
+        font-family: sans-serif;
+        text-align: center;
+      }
+      .board {
+        display: grid;
+        grid-template-columns: repeat(3, 80px);
+        gap: 5px;
+        justify-content: center;
+        margin: 20px 0;
+      }
+      .cell {
+        width: 80px;
+        height: 80px;
+        font-size: 2em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #333;
+        cursor: pointer;
+      }
+      .cell:hover {
+        background: #eee;
+      }
+      .status {
+        margin: 10px;
+        font-size: 1.2em;
+      }
+      button {
+        padding: 6px 12px;
+        font-size: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://unpkg.com/juris@0.8.0/juris.js"></script>
+    <script>
+      const juris = new Juris({
+        states: {
+          board: Array(9).fill(null),
+          current: "X",
+          winner: null
+        },
+        components: {
+          TicTacToe: (props, ctx) => ({
+            render: () => ({
+              div: {
+                class: "game",
+                children: [
+                  { h1: { text: "Tic Tac Toe" } },
+                  {
+                    div: {
+                      class: "board",
+                      children: () =>
+                        ctx.getState("board").map((val, i) => ({
+                          div: {
+                            class: "cell",
+                            text: () => ctx.getState(`board.${i}`) || "",
+                            onClick: () => {
+                              const board = [...ctx.getState("board")];
+                              if (board[i] || ctx.getState("winner")) return;
+                              board[i] = ctx.getState("current");
+                              ctx.setState("board", board);
+                              ctx.setState(
+                                "current",
+                                board[i] === "X" ? "O" : "X"
+                              );
+                              checkWinner(ctx, board);
+                            }
+                          }
+                        }))
+                    }
+                  },
+                  {
+                    div: {
+                      class: "status",
+                      text: () => {
+                        const winner = ctx.getState("winner");
+                        if (winner === "Draw") return "It's a draw!";
+                        if (winner) return `Winner: ${winner}`;
+                        return `Current Player: ${ctx.getState("current")}`;
+                      }
+                    }
+                  },
+                  {
+                    button: {
+                      text: "Restart",
+                      onClick: () => {
+                        ctx.setState("board", Array(9).fill(null));
+                        ctx.setState("current", "X");
+                        ctx.setState("winner", null);
+                      }
+                    }
+                  }
+                ]
+              }
+            })
+          })
+        },
+        layout: {
+          TicTacToe: {}
+        }
+      });
+
+      function checkWinner(ctx, board) {
+        const lines = [
+          [0, 1, 2],
+          [3, 4, 5],
+          [6, 7, 8],
+          [0, 3, 6],
+          [1, 4, 7],
+          [2, 5, 8],
+          [0, 4, 8],
+          [2, 4, 6]
+        ];
+        for (const [a, b, c] of lines) {
+          if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            ctx.setState("winner", board[a]);
+            return;
+          }
+        }
+        if (!board.includes(null)) {
+          ctx.setState("winner", "Draw");
+        }
+      }
+
+        juris.render(document.body);
+    </script>
+  </body>
+</html>
